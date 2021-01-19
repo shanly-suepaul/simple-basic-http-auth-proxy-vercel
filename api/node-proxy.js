@@ -36,9 +36,10 @@ const server = http.createServer(function(req, res) {
         .catch(error => {
           // TODO handle invalid password
           console.log(error)
+          console.log(error.toJSON())
 
           res.statusCode = 500
-          res.json({
+          res.send({
             error: 'Could not authenticate with Vercel.'
           })
         })
