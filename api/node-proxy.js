@@ -39,14 +39,15 @@ const server = http.createServer(function(req, res) {
           console.log(error.toJSON())
 
           res.statusCode = 500
-          res.send({
-            error: 'Could not authenticate with Vercel.'
-          })
+        res.statusMessage = 'Could not authenticate with Vercel';
+        res.end()
         })
   } else {
     proxy.web(req, res, { target: `${origin}` })
   }
 })
+
+console.log(process.env.AWS_LAMBDA_RUNTIME_API)
 
 const port = process.env.AWS_LAMBDA_RUNTIME_API.split(':')[1]
 console.log(`simple-auth-proxy for Vercel started on port ${port}`)
