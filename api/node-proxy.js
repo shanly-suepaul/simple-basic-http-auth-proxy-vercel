@@ -25,7 +25,8 @@ const server = http.createServer(function(req, res) {
   // obtain cookie via Vercel auth flow
   // TODO handle cookie expiration
   if (!cookie) {
-    axios.post(origin, `_vercel_password=${password}`)
+      console.log(process.env.AWS_LAMBDA_RUNTIME_API)
+    /*axios.post(origin, `_vercel_password=${password}`)
         .then(response => {
           console.log(response.data)
           console.log(response.headers)
@@ -41,7 +42,7 @@ const server = http.createServer(function(req, res) {
           res.statusCode = 500
         res.statusMessage = 'Could not authenticate with Vercel';
         res.end()
-        })
+        })*/
   } else {
     proxy.web(req, res, { target: `${origin}` })
   }
