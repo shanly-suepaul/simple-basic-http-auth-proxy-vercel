@@ -1,4 +1,4 @@
-import axios from 'axios'
+import fetch from 'node-fetch'
 const http = require('http')
 const httpProxy = require('http-proxy')
 
@@ -7,7 +7,6 @@ let cookie;
 // Create a proxy server with custom application logic
 const proxy = httpProxy.createProxyServer({changeOrigin: true, autoRewrite: true, hostRewrite: true, followRedirects: true})
 
-// TODO handle invalid cookie
 proxy.on('proxyReq', function(proxyReq, req, res, options) {
   proxyReq.setHeader('Cookie', cookie);
 });
@@ -22,29 +21,29 @@ const server = http.createServer(function(req, res) {
   const origin = process.env.ORIGIN
   const password = process.env.PASSWORD
 
+  const target = origin + req.url.split('/api/proxy')[1]
+
   // obtain cookie via Vercel auth flow
-  // TODO handle cookie expiration
+  // we don't handle cookie expiration because this runs as a lambda
   if (!cookie) {
-      console.log(process.env.AWS_LAMBDA_RUNTIME_API)
-    /*axios.post(origin, `_vercel_password=${password}`)
-        .then(response => {
-          console.log(response.data)
-          console.log(response.headers)
-          cookie = response.headers['Set-Cookie'].match(/_vercel_jwt=[a-zA-Z0-9-_.]+;/)[0]
+    fetch(origin, {
+      'headers': {
+          'accept': '*/*',
+          'content-type': 'application/x-www-form-urlencoded'
+      },
+      'body': `_vercel_password=${password}`,
+      'method': 'POST',
+      'mode': 'cors',
+      'redirect': 'manual',
+    }).then(vercelResponse => {
+      cookie = vercelResponse.status === 303
+        ? vercelResponse.headers.get('set-cookie').match(/_vercel_jwt=[a-zA-Z0-9-_.]+;/)[0]
+        : null
 
-          proxy.web(req, res, { target: `${origin}` })
-        })
-        .catch(error => {
-          // TODO handle invalid password
-          console.log(error)
-          console.log(error.toJSON())
-
-          res.statusCode = 500
-        res.statusMessage = 'Could not authenticate with Vercel';
-        res.end()
-        })*/
+      proxy.web(req, res, { ignorePath: true, target })
+    })
   } else {
-    proxy.web(req, res, { target: `${origin}` })
+    proxy.web(req, res, { ignorePath: true, target })
   }
 })
 
